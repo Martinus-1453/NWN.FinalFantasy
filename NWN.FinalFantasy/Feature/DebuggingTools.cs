@@ -86,5 +86,12 @@ namespace NWN.FinalFantasy.Feature
             var player = GetLastUsedBy();
             GiveGoldToCreature(player, 5000);
         }
+
+        [NWNEventHandler("test11")]
+        public static void SimulateTripleTriad()
+        {
+            var player = GetLastUsedBy();
+            TripleTriad.SimulateStart(player);
+        }
     }
 }
