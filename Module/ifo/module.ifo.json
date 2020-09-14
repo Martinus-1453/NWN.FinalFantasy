@@ -62,6 +62,13 @@
           "type": "resref",
           "value": "b_garden_int"
         }
+      },
+      {
+        "__struct_id": 6,
+        "Area_Name": {
+          "type": "resref",
+          "value": "tt_arena"
+        }
       }
     ]
   },

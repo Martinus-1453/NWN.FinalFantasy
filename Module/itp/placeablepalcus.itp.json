@@ -9591,6 +9591,17 @@
                     "__struct_id": 0,
                     "NAME": {
                       "type": "cexostring",
+                      "value": "Market Terminal"
+                    },
+                    "RESREF": {
+                      "type": "resref",
+                      "value": "market_terminal"
+                    }
+                  },
+                  {
+                    "__struct_id": 0,
+                    "NAME": {
+                      "type": "cexostring",
                       "value": "NPC Corpse"
                     },
                     "RESREF": {
@@ -9629,6 +9640,28 @@
                     "RESREF": {
                       "type": "resref",
                       "value": "trash_can"
+                    }
+                  },
+                  {
+                    "__struct_id": 0,
+                    "NAME": {
+                      "type": "cexostring",
+                      "value": "Triple Triad Card"
+                    },
+                    "RESREF": {
+                      "type": "resref",
+                      "value": "tt_card"
+                    }
+                  },
+                  {
+                    "__struct_id": 0,
+                    "NAME": {
+                      "type": "cexostring",
+                      "value": "Triple Triad Placemat"
+                    },
+                    "RESREF": {
+                      "type": "resref",
+                      "value": "tt_placemat"
                     }
                   }
                 ]
