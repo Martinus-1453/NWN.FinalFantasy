@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using NWN.FinalFantasy.Core;
+using NWN.FinalFantasy.Core.NWScript;
 using NWN.FinalFantasy.Core.NWScript.Enum;
 using NWN.FinalFantasy.Service.TripleTriadService;
 using Pipelines.Sockets.Unofficial.Arenas;
@@ -10,9 +11,24 @@ namespace NWN.FinalFantasy.Service
 {
     public static class TripleTriad
     {
+        // Textures
         private const string DefaultCardTexture = "CardBack";
+        private const string Power0Texture = "TT_Power0";
+        private const string Power1Texture = "TT_Power1";
+        private const string Power2Texture = "TT_Power2";
+        private const string Power3Texture = "TT_Power3";
+        private const string Power4Texture = "TT_Power4";
+        private const string Power5Texture = "TT_Power5";
+        private const string Power6Texture = "TT_Power6";
+        private const string Power7Texture = "TT_Power7";
+        private const string Power8Texture = "TT_Power8";
+        private const string Power9Texture = "TT_Power9";
+        private const string PowerATexture = "TT_PowerA";
+
         private const string ArenaResref = "tt_arena";
         private const string CardResref = "tt_card";
+        private const float BoardCardScale = 2.00f;
+        private const float HandCardScale = 1.25f;
 
         private static Dictionary<CardType, Card> _availableCards;
 
@@ -101,8 +117,32 @@ namespace NWN.FinalFantasy.Service
                     var card = _availableCards[(CardType)randomId];
                     SetName(placeable, card.Name);
                     ReplaceObjectTexture(placeable, DefaultCardTexture, card.Texture);
-                    SetObjectVisualTransform(placeable, ObjectVisualTransform.Scale, 2.75f);
+                    SetObjectVisualTransform(placeable, ObjectVisualTransform.Scale, BoardCardScale);
                 }
+            }
+
+            for (var cardNumber = 1; cardNumber <= 5; cardNumber++)
+            {
+                var location = GetLocalLocation(area, $"PLAYER_1_HAND_{cardNumber}");
+                var placeable = CreateObject(ObjectType.Placeable, CardResref, location);
+                var randomId = Random.Next(1, 5);
+
+                var card = _availableCards[(CardType)randomId];
+                SetName(placeable, card.Name);
+                ReplaceObjectTexture(placeable, DefaultCardTexture, card.Texture);
+                SetObjectVisualTransform(placeable, ObjectVisualTransform.Scale, HandCardScale);
+            }
+
+            for (var cardNumber = 1; cardNumber <= 5; cardNumber++)
+            {
+                var location = GetLocalLocation(area, $"PLAYER_2_HAND_{cardNumber}");
+                var placeable = CreateObject(ObjectType.Placeable, CardResref, location);
+                var randomId = Random.Next(1, 5);
+
+                var card = _availableCards[(CardType)randomId];
+                SetName(placeable, card.Name);
+                ReplaceObjectTexture(placeable, DefaultCardTexture, card.Texture);
+                SetObjectVisualTransform(placeable, ObjectVisualTransform.Scale, HandCardScale);
             }
 
         }

@@ -93,5 +93,25 @@ namespace NWN.FinalFantasy.Feature
             var player = GetLastUsedBy();
             TripleTriad.SimulateStart(player);
         }
+
+        [NWNEventHandler("test12")]
+        public static void UseCard()
+        {
+            var card = OBJECT_SELF;
+
+            var val = GetLocalBool(card, "USED");
+
+            if (val)
+            {
+                AssignCommand(card, () => ClearAllActions());
+                AssignCommand(card, () => ActionPlayAnimation(Animation.PlaceableDeactivate, 1f, 99999f));
+            }
+            else
+            {
+                AssignCommand(card, () => ClearAllActions());
+                AssignCommand(card, () => ActionPlayAnimation(Animation.PlaceableActivate, 1f, 99999f));
+            }
+        }
+
     }
 }
