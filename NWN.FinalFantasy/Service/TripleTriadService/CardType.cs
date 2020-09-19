@@ -3,10 +3,11 @@
     public enum CardType
     {
         Invalid = 0,
-        Geezard = 1,
-        Funguar = 2,
-        BiteBug = 3,
-        RedBat = 4,
-        Blobra = 5,
+        FaceDown = 1,
+        Geezard = 2,
+        Funguar = 3,
+        BiteBug = 4,
+        RedBat = 5,
+        Blobra = 6,
     }
 }

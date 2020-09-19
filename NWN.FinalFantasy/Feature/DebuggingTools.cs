@@ -3,9 +3,11 @@ using NWN.FinalFantasy.Core;
 using NWN.FinalFantasy.Core.NWNX;
 using NWN.FinalFantasy.Core.NWScript;
 using NWN.FinalFantasy.Core.NWScript.Enum;
+using NWN.FinalFantasy.Entity;
 using NWN.FinalFantasy.Enumeration;
 using NWN.FinalFantasy.Feature.DialogDefinition;
 using NWN.FinalFantasy.Service;
+using NWN.FinalFantasy.Service.TripleTriadService;
 using static NWN.FinalFantasy.Core.NWScript.NWScript;
 using Dialog = NWN.FinalFantasy.Service.Dialog;
 using Skill = NWN.FinalFantasy.Service.Skill;
@@ -91,7 +93,20 @@ namespace NWN.FinalFantasy.Feature
         public static void SimulateTripleTriad()
         {
             var player = GetLastUsedBy();
-            TripleTriad.SimulateStart(player);
+            var playerId = GetObjectUUID(player);
+            var dbTTPlayer = DB.Get<PlayerTripleTriad>(playerId) ?? new PlayerTripleTriad();
+            dbTTPlayer.Decks[1] = new CardDeck
+            {
+                Name = "Player Deck",
+                Card1 = CardType.Geezard,
+                Card2 = CardType.Funguar,
+                Card3 = CardType.BiteBug,
+                Card4 = CardType.RedBat,
+                Card5 = CardType.Blobra,
+            };
+            DB.Set(playerId, dbTTPlayer);
+
+            TripleTriad.StartGame(player, 1, player, 1);
         }
 
         [NWNEventHandler("test12")]

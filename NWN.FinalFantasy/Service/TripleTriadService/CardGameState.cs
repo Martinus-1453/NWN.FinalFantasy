@@ -1,17 +1,24 @@
 ﻿using System.Collections.Generic;
+using Pipelines.Sockets.Unofficial.Arenas;
 
 namespace NWN.FinalFantasy.Service.TripleTriadService
 {
     public class CardGameState
     {
+        public uint ArenaArea { get; set; }
+
+        public bool HasInitialized { get; set; }
         public uint Player1 { get; set; }
         public uint Player2 { get; set; }
-        public Card[,] Board { get; set; }
+        public CardBoardPosition[,] Board { get; set; }
         public CardGamePlayer CurrentPlayerTurn { get; set; }
         public CardRuleType ActiveRule { get; set; }
 
-        public List<Card> Player1Hand { get; set; }
-        public List<Card> Player2Hand { get; set; }
+        public Dictionary<int, CardHand> Player1Hand { get; set; }
+        public Dictionary<int, CardHand> Player2Hand { get; set; }
+
+        public CardSelection Player1Selection { get; set; }
+        public CardSelection Player2Selection { get; set; }
 
         public int CalculatePoints(CardGamePlayer player)
         {
@@ -43,14 +50,45 @@ namespace NWN.FinalFantasy.Service.TripleTriadService
             return points;
         }
 
-        public CardGameState(uint player1, uint player2)
+        public CardGameState(uint arenaArea, uint player1, uint player2)
         {
+            ArenaArea = arenaArea;
+
             Player1 = player1;
             Player2 = player2;
 
-            Board = new Card[3,3];
-            Player1Hand = new List<Card>();
-            Player2Hand = new List<Card>();
+            Board = new CardBoardPosition[3,3];
+            Board[0, 0] = new CardBoardPosition();
+            Board[0, 1] = new CardBoardPosition();
+            Board[0, 2] = new CardBoardPosition();
+
+            Board[1, 0] = new CardBoardPosition();
+            Board[1, 1] = new CardBoardPosition();
+            Board[1, 2] = new CardBoardPosition();
+
+            Board[2, 0] = new CardBoardPosition();
+            Board[2, 1] = new CardBoardPosition();
+            Board[2, 2] = new CardBoardPosition();
+
+            Player1Hand = new Dictionary<int, CardHand>
+            {
+                {1, new CardHand()},
+                {2, new CardHand()},
+                {3, new CardHand()},
+                {4, new CardHand()},
+                {5, new CardHand()},
+            };
+            Player2Hand = new Dictionary<int, CardHand>
+            {
+                {1, new CardHand()},
+                {2, new CardHand()},
+                {3, new CardHand()},
+                {4, new CardHand()},
+                {5, new CardHand()},
+            };
+
+            Player1Selection = new CardSelection();
+            Player2Selection = new CardSelection();
         }
     }
 }
