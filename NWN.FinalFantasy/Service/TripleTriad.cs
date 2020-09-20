@@ -321,7 +321,41 @@ namespace NWN.FinalFantasy.Service
                 }
             }
 
+            if (Random.D100(1) <= 50)
+            {
+                state.CurrentPlayerTurn = CardGamePlayer.Player1;
+                SendMessageToPC(state.Player1, "Player 1 won the coin toss and goes first.");
+                SendMessageToPC(state.Player2, "Player 1 won the coin toss and goes first.");
+            }
+            else
+            {
+                state.CurrentPlayerTurn = CardGamePlayer.Player2;
+                SendMessageToPC(state.Player1, "Player 2 won the coin toss and goes first.");
+                SendMessageToPC(state.Player2, "Player 2 won the coin toss and goes first.");
+            }
+
+
             state.HasInitialized = true;
+        }
+
+        private static void ChangeTurn(string gameId, CardGamePlayer playerTurn)
+        {
+            var state = GameStates[gameId];
+
+            state.CurrentPlayerTurn = playerTurn;
+
+            if (playerTurn == CardGamePlayer.Player1)
+            {
+                var message = $"It is {GetName(state.Player1)}'s turn.";
+                SendMessageToPC(state.Player1, message);
+                SendMessageToPC(state.Player2, message);
+            }
+            else
+            {
+                var message = $"It is {GetName(state.Player2)}'s turn.";
+                SendMessageToPC(state.Player1, message);
+                SendMessageToPC(state.Player2, message);
+            }
         }
 
         /// <summary>
@@ -554,6 +588,14 @@ namespace NWN.FinalFantasy.Service
             placeable = SpawnCard(gameId, $"BOARD_{x}_{y}", handCard.Type);
             SetUseableFlag(placeable, false);
 
+            var nextTurn = state.CurrentPlayerTurn == CardGamePlayer.Player1
+                ? CardGamePlayer.Player2
+                : CardGamePlayer.Player1;
+
+            ChangeTurn(gameId, nextTurn);
+
+
+            // todo: Game rules on card fights
         }
 
     }
