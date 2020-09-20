@@ -17,9 +17,14 @@ namespace NWN.FinalFantasy.Entity
         public Dictionary<CardType, DateTime> AvailableCards { get; set; }
         public Dictionary<int, CardDeck> Decks { get; set; }
 
-        public uint Wins { get; set; }
-        public uint Losses { get; set; }
-        public uint Draws { get; set; }
+        public uint WinsAgainstPlayers { get; set; }
+        public uint LossesAgainstPlayers { get; set; }
+        public uint DrawsAgainstPlayers { get; set; }
+
+        public uint WinsAgainstNPCs { get; set; }
+        public uint LossesAgainstNPCs{ get; set; }
+        public uint DrawsAgainstNPCs { get; set; }
+
         public uint TriadPoints { get; set; }
     }
 }

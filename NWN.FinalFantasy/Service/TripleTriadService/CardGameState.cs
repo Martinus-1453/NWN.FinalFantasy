@@ -20,34 +20,43 @@ namespace NWN.FinalFantasy.Service.TripleTriadService
         public CardSelection Player1Selection { get; set; }
         public CardSelection Player2Selection { get; set; }
 
-        public int CalculatePoints(CardGamePlayer player)
-        {
-            if (player == CardGamePlayer.Invalid) return 0;
+        public int DisconnectionCheckCounter { get; set; }
 
-            var hand = player == CardGamePlayer.Player1 ? Player1Hand : Player2Hand;
-            
+        /// <summary>
+        /// Calculates the points for each player.
+        /// Cards in hands count for 1 point for their owner.
+        /// Cards on the board count for 1 point for whoever has claimed them.
+        /// </summary>
+        /// <returns>The number of points for each player.</returns>
+        public (int, int) CalculatePoints()
+        {
             // Cards in hands count for one point each.
-            var points = hand.Count;
+            var player1Points = Player1Hand.Count;
+            var player2Points = Player2Hand.Count;
 
             // Iterate over the board and count up the number of cards owned by this player.
-            for (int x = 0; x < 3; x++)
+            for (var x = 0; x < 3; x++)
             {
-                for (int y = 0; y < 3; y++)
+                for (var y = 0; y < 3; y++)
                 {
                     // Make sure there's a card in this position.
                     if (Board[x, y] != null)
                     {
                         var card = Board[x, y];
 
-                        if (card.CurrentOwner == player)
+                        if (card.CurrentOwner == CardGamePlayer.Player1)
                         {
-                            points++;
+                            player1Points++;
+                        }
+                        else if (card.CurrentOwner == CardGamePlayer.Player2)
+                        {
+                            player2Points++;
                         }
                     }
                 }
             }
 
-            return points;
+            return (player1Points, player2Points);
         }
 
         public CardGameState(uint arenaArea, uint player1, uint player2)

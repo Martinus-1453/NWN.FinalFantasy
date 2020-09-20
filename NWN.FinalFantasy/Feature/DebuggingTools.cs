@@ -92,21 +92,60 @@ namespace NWN.FinalFantasy.Feature
         [NWNEventHandler("test11")]
         public static void SimulateTripleTriad()
         {
-            var player = GetLastUsedBy();
-            var playerId = GetObjectUUID(player);
-            var dbTTPlayer = DB.Get<PlayerTripleTriad>(playerId) ?? new PlayerTripleTriad();
-            dbTTPlayer.Decks[1] = new CardDeck
-            {
-                Name = "Player Deck",
-                Card1 = CardType.Geezard,
-                Card2 = CardType.Funguar,
-                Card3 = CardType.BiteBug,
-                Card4 = CardType.RedBat,
-                Card5 = CardType.Blobra,
-            };
-            DB.Set(playerId, dbTTPlayer);
+            var player1 = GetFirstPC();
+            var player1Id = GetObjectUUID(player1);
+            var player2 = GetNextPC();
+            var player2Id = GetObjectUUID(player2);
 
-            TripleTriad.StartGame(player, 1, player, 1);
+            // Single player mode
+            if (!GetIsObjectValid(player2))
+            {
+                var player = GetLastUsedBy();
+                var playerId = GetObjectUUID(player);
+                var dbTTPlayer = DB.Get<PlayerTripleTriad>(playerId) ?? new PlayerTripleTriad();
+                dbTTPlayer.Decks[1] = new CardDeck
+                {
+                    Name = "Player Deck",
+                    Card1 = CardType.Geezard,
+                    Card2 = CardType.Funguar,
+                    Card3 = CardType.BiteBug,
+                    Card4 = CardType.RedBat,
+                    Card5 = CardType.Blobra,
+                };
+                DB.Set(playerId, dbTTPlayer);
+
+                TripleTriad.StartGame(player, 1, player, 1);
+            }
+
+            // Two player mode
+            else
+            {
+                var dbTTPlayer1 = DB.Get<PlayerTripleTriad>(player1Id) ?? new PlayerTripleTriad();
+                dbTTPlayer1.Decks[1] = new CardDeck
+                {
+                    Name = "Player Deck",
+                    Card1 = CardType.Geezard,
+                    Card2 = CardType.Funguar,
+                    Card3 = CardType.BiteBug,
+                    Card4 = CardType.RedBat,
+                    Card5 = CardType.Blobra,
+                };
+                DB.Set(player1Id, dbTTPlayer1);
+
+                var dbTTPlayer2 = DB.Get<PlayerTripleTriad>(player2Id) ?? new PlayerTripleTriad();
+                dbTTPlayer2.Decks[1] = new CardDeck
+                {
+                    Name = "Player Deck",
+                    Card1 = CardType.Geezard,
+                    Card2 = CardType.Funguar,
+                    Card3 = CardType.BiteBug,
+                    Card4 = CardType.RedBat,
+                    Card5 = CardType.Blobra,
+                };
+                DB.Set(player2Id, dbTTPlayer2);
+            }
+
+
         }
 
         [NWNEventHandler("test12")]

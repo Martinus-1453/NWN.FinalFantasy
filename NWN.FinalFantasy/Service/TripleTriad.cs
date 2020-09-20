@@ -5,6 +5,7 @@ using NWN.FinalFantasy.Core.NWNX;
 using NWN.FinalFantasy.Core.NWNX.Enum;
 using NWN.FinalFantasy.Core.NWScript.Enum;
 using NWN.FinalFantasy.Entity;
+using NWN.FinalFantasy.Feature;
 using NWN.FinalFantasy.Service.TripleTriadService;
 using static NWN.FinalFantasy.Core.NWScript.NWScript;
 using Location = NWN.FinalFantasy.Core.Location;
@@ -22,10 +23,15 @@ namespace NWN.FinalFantasy.Service
         private const string ElementTexture = "card_elem";
 
         // Determines the texture names used for each power slot
-        private const string CardPowerRight = "Card_Pwr_Slot_1";
-        private const string CardPowerTop = "Card_Pwr_Slot_2";
-        private const string CardPowerBottom = "Card_Pwr_Slot_3";
-        private const string CardPowerLeft = "Card_Pwr_Slot_4"; 
+        private const string CardPowerPlayer1Top = "Card_Pwr_B_2";
+        private const string CardPowerPlayer1Bottom = "Card_Pwr_B_3";
+        private const string CardPowerPlayer1Left = "Card_Pwr_B_1";
+        private const string CardPowerPlayer1Right = "Card_Pwr_B_4";
+
+        private const string CardPowerPlayer2Top = "Card_Pwr_R_2";
+        private const string CardPowerPlayer2Bottom = "Card_Pwr_R_3";
+        private const string CardPowerPlayer2Left = "Card_Pwr_R_4";
+        private const string CardPowerPlayer2Right = "Card_Pwr_R_1"; 
 
         // Texture used for the face-down cards on power textures
         private const string EmptyTexture = "Card_None";
@@ -214,12 +220,16 @@ namespace NWN.FinalFantasy.Service
 
             if (GetIsPC(player1))
             {
+                PersistentLocation.SaveLocation(player1);
+
                 var playerStartLocation1 = GetLocalLocation(arenaArea, "PLAYER_1_START");
                 AssignCommand(player1, () => ActionJumpToLocation(playerStartLocation1));
             }
 
             if (GetIsPC(player2))
             {
+                PersistentLocation.SaveLocation(player1);
+
                 var playerStartLocation2 = GetLocalLocation(arenaArea, "PLAYER_2_START");
                 AssignCommand(player2, () => ActionJumpToLocation(playerStartLocation2));
             }
@@ -244,6 +254,31 @@ namespace NWN.FinalFantasy.Service
             if (!state.HasInitialized)
             {
                 InitializeGame(gameId);
+            }
+            // Game has initialized. Check to make sure players are still in area.
+            else
+            {
+                // One or more player has left the area or disconnected.
+                if (GetArea(state.Player1) != state.ArenaArea ||
+                    GetArea(state.Player2) != state.ArenaArea)
+                {
+                    state.DisconnectionCheckCounter++;
+                }
+                // Both players are in the arena, reset the counter.
+                else
+                {
+                    state.DisconnectionCheckCounter = 0;
+                }
+
+                // Counter has reached limit. End the game prematurely.
+                if (state.DisconnectionCheckCounter >= 10)
+                {
+                    SendMessageToPC(state.Player1, "One or more players have left the Triple Triad arena. The game will end now.");
+                    SendMessageToPC(state.Player2, "One or more players have left the Triple Triad arena. The game will end now.");
+
+                    EndGame(gameId, true);
+                }
+
             }
         }
 
@@ -375,10 +410,15 @@ namespace NWN.FinalFantasy.Service
             ReplaceObjectTexture(placeable, DefaultCardTexture, card.Texture);
 
             // Set power levels
-            ReplaceObjectTexture(placeable, CardPowerRight, GetPowerTexture(card.RightPower));
-            ReplaceObjectTexture(placeable, CardPowerTop, GetPowerTexture(card.TopPower));
-            ReplaceObjectTexture(placeable, CardPowerBottom, GetPowerTexture(card.BottomPower));
-            ReplaceObjectTexture(placeable, CardPowerLeft, GetPowerTexture(card.LeftPower));
+            ReplaceObjectTexture(placeable, CardPowerPlayer1Right, GetPowerTexture(card.RightPower));
+            ReplaceObjectTexture(placeable, CardPowerPlayer1Top, GetPowerTexture(card.TopPower));
+            ReplaceObjectTexture(placeable, CardPowerPlayer1Bottom, GetPowerTexture(card.BottomPower));
+            ReplaceObjectTexture(placeable, CardPowerPlayer1Left, GetPowerTexture(card.LeftPower));
+
+            ReplaceObjectTexture(placeable, CardPowerPlayer2Right, GetPowerTexture(card.RightPower));
+            ReplaceObjectTexture(placeable, CardPowerPlayer2Top, GetPowerTexture(card.TopPower));
+            ReplaceObjectTexture(placeable, CardPowerPlayer2Bottom, GetPowerTexture(card.BottomPower));
+            ReplaceObjectTexture(placeable, CardPowerPlayer2Left, GetPowerTexture(card.LeftPower));
 
             // Set the element texture
             ReplaceObjectTexture(placeable, ElementTexture, GetElementTexture(card.Element));
@@ -403,6 +443,23 @@ namespace NWN.FinalFantasy.Service
             }
 
             return EmptyTexture;
+        }
+
+        private static void FlipBoardCard(string gameId, uint placeable)
+        {
+            var state = GameStates[gameId];
+            var x = GetLocalInt(placeable, "TRIPLE_TRIAD_X");
+            var y = GetLocalInt(placeable, "TRIPLE_TRIAD_Y");
+            var boardCard = state.Board[x, y];
+
+            if (boardCard.CurrentOwner == CardGamePlayer.Player1)
+            {
+                AssignCommand(boardCard.Placeable, () => ActionPlayAnimation(Animation.PlaceableDeactivate));
+            }
+            else if (boardCard.CurrentOwner == CardGamePlayer.Player2)
+            {
+                AssignCommand(boardCard.Placeable, () => ActionPlayAnimation(Animation.PlaceableActivate));
+            }
         }
 
         private static string GetElementTexture(CardElementType elementType)
@@ -547,34 +604,323 @@ namespace NWN.FinalFantasy.Service
                 ? state.Player1Hand 
                 : state.Player2Hand;
 
+            // Remove the card from the player's hand
             var handCard = hand[selection.CardHandId];
-
             if (handCard.Placeable != null)
                 DestroyObject((uint) handCard.Placeable);
 
+            // Destroy the selection placeable
             if (selection.Placeable != null)
+            {
                 DestroyObject((uint) selection.Placeable);
+                selection.Placeable = null;
+            }
 
+            // Destroy the blank card on the board
             DestroyObject(placeable);
 
-            selection.Placeable = null;
-
+            // Spawn a new card onto the board in the same position.
             placeable = SpawnCard(gameId, $"BOARD_{x}_{y}", handCard.Type);
             SetUseableFlag(placeable, false);
+            SetLocalInt(placeable, "TRIPLE_TRIAD_X", x);
+            SetLocalInt(placeable, "TRIPLE_TRIAD_Y", y);
 
+            // Update the board state
+            state.Board[x, y].Placeable = placeable;
+            state.Board[x, y].CardType = handCard.Type;
+            state.Board[x, y].CurrentOwner = state.CurrentPlayerTurn;
+
+            // Handle flipping the card to match the owner.
+            FlipBoardCard(gameId, placeable);
+
+            // Remove the card from the player's hand.
+            hand.Remove(selection.CardHandId);
+
+            // Change turns
             var nextTurn = state.CurrentPlayerTurn == CardGamePlayer.Player1
                 ? CardGamePlayer.Player2
                 : CardGamePlayer.Player1;
 
-            CardFight(handCard.Type, x, y);
+            // Handle card fighting
+            CardFight(gameId, x, y);
 
-            ChangeTurn(gameId, nextTurn);
+            // Have all cards been placed?
+            if (CheckForEndCondition(gameId))
+            {
+                EndGame(gameId, false);
+            }
+            // Game is still going, change turns.
+            else
+            {
+                ChangeTurn(gameId, nextTurn);
+            }
         }
 
-        private static void CardFight(CardType cardType, int x, int y)
+        /// <summary>
+        /// Handles fighting cards in adjacent positions.
+        /// </summary>
+        /// <param name="gameId">The game Id</param>
+        /// <param name="x">The X position of the card that was just placed</param>
+        /// <param name="y">The Y position of the card that was just placed</param>
+        private static void CardFight(string gameId, int x, int y)
         {
-            // todo
+            int DeterminePower(CardType cardType, CardDirection direction)
+            {
+                var card = AvailableCards[cardType];
+
+                switch (direction)
+                {
+                    case CardDirection.Top:
+                        return card.TopPower;
+                    case CardDirection.Bottom:
+                        return card.BottomPower;
+                    case CardDirection.Left:
+                        return card.LeftPower;
+                    case CardDirection.Right:
+                        return card.RightPower;
+                }
+
+                return 0;
+            }
+
+            void DoFight(
+                CardBoardPosition attacker, 
+                CardBoardPosition defender, 
+                CardDirection attackerDirection, 
+                CardDirection defenderDirection)
+            {
+                // No defender card. Skip out of this as there's nothing to fight.
+                if (defender.CardType == CardType.Invalid) return;
+                // Same owner, no sense running the logic.
+                if (attacker.CurrentOwner == defender.CurrentOwner) return;
+
+                var attackerPower = DeterminePower(attacker.CardType, attackerDirection);
+                var defenderPower = DeterminePower(defender.CardType, defenderDirection);
+
+                if (attackerPower > defenderPower)
+                {
+                    Console.WriteLine($"Attacker ({attackerDirection}) / {attackerPower} vs Defender ({defenderDirection}) / {defenderPower}"); // todo debug
+
+                    defender.CurrentOwner = attacker.CurrentOwner;
+                }
+
+                // todo: "Same" rule would go here. If same power, attacker gets control
+
+                // todo: "Combo" rule would go here.
+
+
+                FlipBoardCard(gameId, attacker.Placeable);
+                FlipBoardCard(gameId, defender.Placeable);
+            }
+
+            var state = GameStates[gameId];
+            var boardCard = state.Board[x, y];
+
+            // Row 1
+            if (x == 0 && y == 0)
+            {
+                DoFight(boardCard, state.Board[0, 1], CardDirection.Right, CardDirection.Left);
+                DoFight(boardCard, state.Board[1, 0], CardDirection.Bottom, CardDirection.Top);
+            }
+            else if (x == 0 && y == 1)
+            {
+                DoFight(boardCard, state.Board[0, 0], CardDirection.Left, CardDirection.Right);
+                DoFight(boardCard, state.Board[0, 2], CardDirection.Right, CardDirection.Left);
+                DoFight(boardCard, state.Board[1, 1], CardDirection.Bottom, CardDirection.Top);
+            }
+            else if (x == 0 && y == 2)
+            {
+                DoFight(boardCard, state.Board[0, 1], CardDirection.Left, CardDirection.Right);
+                DoFight(boardCard, state.Board[1, 2], CardDirection.Bottom, CardDirection.Top);
+            }
+
+            // Row 2
+            else if (x == 1 && y == 0)
+            {
+                DoFight(boardCard, state.Board[0, 0], CardDirection.Top, CardDirection.Bottom);
+                DoFight(boardCard, state.Board[1, 1], CardDirection.Right, CardDirection.Left);
+                DoFight(boardCard, state.Board[2, 0], CardDirection.Bottom, CardDirection.Top);
+            }
+            else if (x == 1 && y == 1)
+            {
+                DoFight(boardCard, state.Board[0, 1], CardDirection.Top, CardDirection.Bottom);
+                DoFight(boardCard, state.Board[1, 0], CardDirection.Left, CardDirection.Right);
+                DoFight(boardCard, state.Board[2, 1], CardDirection.Bottom, CardDirection.Top);
+                DoFight(boardCard, state.Board[1, 2], CardDirection.Right, CardDirection.Left);
+            }
+            else if (x == 1 && y == 2)
+            {
+                DoFight(boardCard, state.Board[0, 2], CardDirection.Top, CardDirection.Bottom);
+                DoFight(boardCard, state.Board[1, 1], CardDirection.Left, CardDirection.Right);
+                DoFight(boardCard, state.Board[2, 2], CardDirection.Bottom, CardDirection.Top);
+            }
+
+            // Row 3
+            else if (x == 2 && y == 0)
+            {
+                DoFight(boardCard, state.Board[1, 0], CardDirection.Top, CardDirection.Bottom);
+                DoFight(boardCard, state.Board[2, 1], CardDirection.Right, CardDirection.Left);
+            }
+            else if (x == 2 && y == 1)
+            {
+                DoFight(boardCard, state.Board[2, 0], CardDirection.Left, CardDirection.Right);
+                DoFight(boardCard, state.Board[1, 1], CardDirection.Top, CardDirection.Bottom);
+                DoFight(boardCard, state.Board[2, 2], CardDirection.Right, CardDirection.Left);
+            }
+            else if (x == 2 && y == 2)
+            {
+                DoFight(boardCard, state.Board[2, 1], CardDirection.Left, CardDirection.Right);
+                DoFight(boardCard, state.Board[1, 2], CardDirection.Top, CardDirection.Bottom);
+            }
         }
 
+        /// <summary>
+        /// Checks to see if there's a player-placed card in every position on the board.
+        /// If there is, the game is presumed to be finished.
+        /// </summary>
+        /// <param name="gameId">The game state Id</param>
+        /// <returns>true if the game is finished, false otherwise</returns>
+        private static bool CheckForEndCondition(string gameId)
+        {
+            var state = GameStates[gameId];
+
+            // Check every position in the board for a non-invalid card.
+            for (var x = 0; x <= 2; x++)
+            {
+                for (var y = 0; y <= 2; y++)
+                {
+                    if (state.Board[x, y].CardType == CardType.Invalid ||
+                        state.Board[x, y].CardType == CardType.FaceDown)
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Ends the game. Player stats are recorded and all players are returned to their last saved position.
+        /// </summary>
+        /// <param name="gameId">The game Id</param>
+        /// <param name="endedPrematurely">If true, a player disconnected or otherwise left the arena. No rewards will be given to either player in this situation.</param>
+        private static void EndGame(string gameId, bool endedPrematurely)
+        {
+            void GrantRewards(uint player, bool? isWinner, bool opponentWasPlayer)
+            {
+                // No need to reward NPCs or DMs.
+                if (!GetIsPC(player) || GetIsDM(player)) return;
+                var playerId = GetObjectUUID(player);
+                var dbTripleTriadPlayer = DB.Get<PlayerTripleTriad>(playerId) ?? new PlayerTripleTriad();
+
+                // Won
+                if (isWinner == true)
+                {
+                    if (opponentWasPlayer)
+                    {
+                        dbTripleTriadPlayer.WinsAgainstPlayers++;
+                    }
+                    else
+                    {
+                        dbTripleTriadPlayer.WinsAgainstNPCs++;
+                    }
+
+                    dbTripleTriadPlayer.TriadPoints += 2;
+                    SendMessageToPC(player, $"Triad Points: {dbTripleTriadPlayer.TriadPoints} (+2)");
+                }
+                // Lost
+                else if (isWinner == false)
+                {
+                    if (opponentWasPlayer)
+                    {
+                        dbTripleTriadPlayer.LossesAgainstPlayers++;
+                    }
+                    else
+                    {
+                        dbTripleTriadPlayer.LossesAgainstNPCs++;
+                    }
+
+                    dbTripleTriadPlayer.TriadPoints++;
+                    SendMessageToPC(player, $"Triad Points: {dbTripleTriadPlayer.TriadPoints} (+1)");
+                }
+                // Draw
+                else
+                {
+                    if (opponentWasPlayer)
+                    {
+                        dbTripleTriadPlayer.DrawsAgainstPlayers++;
+                    }
+                    else
+                    {
+                        dbTripleTriadPlayer.DrawsAgainstNPCs++;
+                    }
+
+                    // No Triad Points granted
+                    SendMessageToPC(player, $"Triad Points: {dbTripleTriadPlayer.TriadPoints} (+0)");
+                }
+
+                DB.Set(playerId, dbTripleTriadPlayer);
+            }
+
+            var state = GameStates[gameId];
+            var (player1Points, player2Points) = state.CalculatePoints();
+
+            // Player 1 wins
+            if (player1Points > player2Points)
+            {
+                var message = $"{GetName(state.Player1)} has won the game!";
+                SendMessageToPC(state.Player1, message);
+                SendMessageToPC(state.Player2, message);
+
+                if (!endedPrematurely)
+                {
+                    GrantRewards(state.Player1, true, GetIsPC(state.Player2));
+                    GrantRewards(state.Player2, false, GetIsPC(state.Player1));
+                }
+            }
+            // Player 2 wins
+            else if (player2Points > player1Points)
+            {
+                var message = $"{GetName(state.Player2)} has won the game!";
+                SendMessageToPC(state.Player1, message);
+                SendMessageToPC(state.Player2, message);
+
+                if (!endedPrematurely)
+                {
+                    GrantRewards(state.Player1, false, GetIsPC(state.Player2));
+                    GrantRewards(state.Player2, true, GetIsPC(state.Player1));
+                }
+            }
+            // Draw
+            else
+            {
+                var message = $"The game ended in a draw!";
+                SendMessageToPC(state.Player1, message);
+                SendMessageToPC(state.Player2, message);
+
+                if (!endedPrematurely)
+                {
+                    GrantRewards(state.Player1, null, GetIsPC(state.Player2));
+                    GrantRewards(state.Player2, null, GetIsPC(state.Player1));
+                }
+            }
+
+            // Send the players back to their saved locations if they're still in the arena.
+            if (GetArea(state.Player1) == state.ArenaArea)
+            {
+                PersistentLocation.LoadLocation(state.Player1);
+            }
+
+            if (GetArea(state.Player2) == state.ArenaArea)
+            {
+                PersistentLocation.LoadLocation(state.Player2);
+            }
+
+            // Clear game state and area.
+            DelayCommand(30f, () =>
+            {
+                DestroyArea(state.ArenaArea);
+                GameStates.Remove(gameId);
+            });
+        }
     }
 }
