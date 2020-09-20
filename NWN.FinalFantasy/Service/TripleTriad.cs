@@ -9,6 +9,7 @@ using NWN.FinalFantasy.Service.TripleTriadService;
 using static NWN.FinalFantasy.Core.NWScript.NWScript;
 using Location = NWN.FinalFantasy.Core.Location;
 using Object = NWN.FinalFantasy.Core.NWNX.Object;
+using Player = NWN.FinalFantasy.Core.NWNX.Player;
 
 namespace NWN.FinalFantasy.Service
 {
@@ -28,23 +29,6 @@ namespace NWN.FinalFantasy.Service
 
         // Texture used for the face-down cards on power textures
         private const string EmptyTexture = "Card_None";
-
-        // Texture names of all number textures
-        private const string Power0Texture = "Card_0";
-        private const string Power1Texture = "Card_1";
-        private const string Power2Texture = "Card_2";
-        private const string Power3Texture = "Card_3";
-        private const string Power4Texture = "Card_4";
-        private const string Power5Texture = "Card_5";
-        private const string Power6Texture = "Card_6";
-        private const string Power7Texture = "Card_7";
-        private const string Power8Texture = "Card_8";
-        private const string Power9Texture = "Card_9";
-        private const string PowerATexture = "Card_10";
-
-        // Background textures
-        private const string BackgroundBlueTexture = "card_bkg_blue";
-        private const string BackgroundRedTexture = "card_bkg_red";
 
         // Resref of the base arena area
         private const string ArenaResref = "tt_arena";
@@ -286,10 +270,15 @@ namespace NWN.FinalFantasy.Service
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_HAND_SLOT", index);
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_OWNER", 1);
                 SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_select");
+                AssignCommand(placeable, () => ActionPlayAnimation(Animation.PlaceableDeactivate));
 
-                ReplaceObjectTexture(placeable, "Card_Bkg_Red", BackgroundBlueTexture);
+                // Disable usability on card only if player isn't playing themselves (debugging purposes)
+                if (state.Player1 != state.Player2)
+                {
+                    Player.SetPlaceableUseable(state.Player2, placeable, false);
+                }
             }
-            
+
             // Spawn player 2's hand
             for (var index = 1; index <= 5; index++)
             {
@@ -300,8 +289,13 @@ namespace NWN.FinalFantasy.Service
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_HAND_SLOT", index);
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_OWNER", 2);
                 SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_select");
+                AssignCommand(placeable, () => ActionPlayAnimation(Animation.PlaceableActivate));
 
-                ReplaceObjectTexture(placeable, "Card_Bkg_Red", BackgroundRedTexture);
+                // Disable usability on card only if player isn't playing themselves (debugging purposes)
+                if (state.Player1 != state.Player2)
+                {
+                    Player.SetPlaceableUseable(state.Player1, placeable, false);
+                }
             }
 
             // Spawn blank cards on the board
@@ -313,11 +307,12 @@ namespace NWN.FinalFantasy.Service
                     var placeable = SpawnCard(gameId, locationId, CardType.Invalid);
                     SetName(placeable, $"({x}, {y})");
                     SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_place");
-                    ReplaceObjectTexture(placeable, "Card_Bkg_Red", EmptyTexture);
                     SetLocalInt(placeable, "TRIPLE_TRIAD_X", x);
                     SetLocalInt(placeable, "TRIPLE_TRIAD_Y", y);
 
                     state.Board[x, y].Placeable = placeable;
+                    ReplaceObjectTexture(placeable, "Card_Bkg_Red", EmptyTexture);
+                    ReplaceObjectTexture(placeable, "Card_Board", EmptyTexture);
                 }
             }
 
@@ -402,30 +397,9 @@ namespace NWN.FinalFantasy.Service
         /// <returns>A texture with a matching power level.</returns>
         private static string GetPowerTexture(int power)
         {
-            switch (power)
+            if (power >= 0 && power <= 10)
             {
-                case 0:
-                    return Power0Texture;
-                case 1:
-                    return Power1Texture;
-                case 2:
-                    return Power2Texture;
-                case 3:
-                    return Power3Texture;
-                case 4:
-                    return Power4Texture;
-                case 5:
-                    return Power5Texture;
-                case 6:
-                    return Power6Texture;
-                case 7:
-                    return Power7Texture;
-                case 8:
-                    return Power8Texture;
-                case 9:
-                    return Power9Texture;
-                case 10:
-                    return PowerATexture;
+                return $"Card_{power}";
             }
 
             return EmptyTexture;
@@ -592,10 +566,14 @@ namespace NWN.FinalFantasy.Service
                 ? CardGamePlayer.Player2
                 : CardGamePlayer.Player1;
 
+            CardFight(handCard.Type, x, y);
+
             ChangeTurn(gameId, nextTurn);
+        }
 
-
-            // todo: Game rules on card fights
+        private static void CardFight(CardType cardType, int x, int y)
+        {
+            // todo
         }
 
     }
