@@ -255,29 +255,64 @@ namespace NWN.FinalFantasy.Service
             {
                 InitializeGame(gameId);
             }
-            // Game has initialized. Check to make sure players are still in area.
-            else
+            else if(state.HasInitialized)
             {
-                // One or more player has left the area or disconnected.
-                if (GetArea(state.Player1) != state.ArenaArea ||
-                    GetArea(state.Player2) != state.ArenaArea)
+                // Is game ending normally?
+                if (state.IsGameEnding)
                 {
-                    state.DisconnectionCheckCounter++;
+                    state.GameEndingTicks++;
+                    SendMessageToPC(state.Player1, "Game will be ending soon...");
+                    SendMessageToPC(state.Player2, "Game will be ending soon...");
+
+                    if (state.GameEndingTicks >= 3) // Roughly 18 seconds after ending, the game will clean up.
+                    {
+                        // Send the players back to their saved locations if they're still in the arena.
+                        if (GetArea(state.Player1) == state.ArenaArea)
+                        {
+                            PersistentLocation.LoadLocation(state.Player1);
+                        }
+
+                        if (GetArea(state.Player2) == state.ArenaArea)
+                        {
+                            PersistentLocation.LoadLocation(state.Player2);
+                        }
+
+                        // Clear game state and area.
+                        DelayCommand(30f, () =>
+                        {
+                            DestroyArea(state.ArenaArea);
+                            GameStates.Remove(gameId);
+                        });
+
+                        state.IsGameEnding = false;
+                    }
                 }
-                // Both players are in the arena, reset the counter.
+                // Otherwise handle player disconnection logic.
                 else
                 {
-                    state.DisconnectionCheckCounter = 0;
+                    // One or more player has left the area or disconnected.
+                    if (GetArea(state.Player1) != state.ArenaArea ||
+                        GetArea(state.Player2) != state.ArenaArea)
+                    {
+                        state.DisconnectionCheckCounter++;
+                    }
+                    // Both players are in the arena, reset the counter.
+                    else
+                    {
+                        state.DisconnectionCheckCounter = 0;
+                    }
+
+                    // Counter has reached limit. End the game prematurely.
+                    if (state.DisconnectionCheckCounter >= 10)
+                    {
+                        SendMessageToPC(state.Player1, "One or more players have left the Triple Triad arena. The game will end now.");
+                        SendMessageToPC(state.Player2, "One or more players have left the Triple Triad arena. The game will end now.");
+
+                        EndGame(gameId, true);
+                    }
+
                 }
 
-                // Counter has reached limit. End the game prematurely.
-                if (state.DisconnectionCheckCounter >= 10)
-                {
-                    SendMessageToPC(state.Player1, "One or more players have left the Triple Triad arena. The game will end now.");
-                    SendMessageToPC(state.Player2, "One or more players have left the Triple Triad arena. The game will end now.");
-
-                    EndGame(gameId, true);
-                }
 
             }
         }
@@ -904,23 +939,10 @@ namespace NWN.FinalFantasy.Service
                 }
             }
 
-            // Send the players back to their saved locations if they're still in the arena.
-            if (GetArea(state.Player1) == state.ArenaArea)
-            {
-                PersistentLocation.LoadLocation(state.Player1);
-            }
-
-            if (GetArea(state.Player2) == state.ArenaArea)
-            {
-                PersistentLocation.LoadLocation(state.Player2);
-            }
-
-            // Clear game state and area.
-            DelayCommand(30f, () =>
-            {
-                DestroyArea(state.ArenaArea);
-                GameStates.Remove(gameId);
-            });
+            // Mark the game as ending. This flag will be picked up in the heartbeat processor.
+            // We don't want to immediately end the game as it will create a jarring experience for the player.
+            // So instead, we leave the game active for about 2 seconds before cleaning up.
+            state.IsGameEnding = true;
         }
     }
 }

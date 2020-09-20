@@ -22,6 +22,9 @@ namespace NWN.FinalFantasy.Service.TripleTriadService
 
         public int DisconnectionCheckCounter { get; set; }
 
+        public int GameEndingTicks { get; set; }
+        public bool IsGameEnding { get; set; }
+
         /// <summary>
         /// Calculates the points for each player.
         /// Cards in hands count for 1 point for their owner.

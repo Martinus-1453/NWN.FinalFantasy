@@ -2,7 +2,7 @@
   "__data_type": "UTP ",
   "AnimationState": {
     "type": "byte",
-    "value": 0
+    "value": 4
   },
   "Appearance": {
     "type": "dword",
@@ -34,7 +34,9 @@
   },
   "Description": {
     "type": "cexolocstring",
-    "value": {}
+    "value": {
+      "0": ""
+    }
   },
   "DisarmDC": {
     "type": "byte",
@@ -74,7 +76,7 @@
   },
   "Lockable": {
     "type": "byte",
-    "value": 1
+    "value": 0
   },
   "Locked": {
     "type": "byte",
