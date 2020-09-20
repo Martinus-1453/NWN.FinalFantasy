@@ -17,6 +17,9 @@ namespace NWN.FinalFantasy.Service
         // Default card graphic texture
         private const string DefaultCardTexture = "Card_Back";
 
+        // Element texture
+        private const string ElementTexture = "card_elem";
+
         // Determines the texture names used for each power slot
         private const string CardPowerRight = "Card_Pwr_Slot_1";
         private const string CardPowerTop = "Card_Pwr_Slot_2";
@@ -24,7 +27,7 @@ namespace NWN.FinalFantasy.Service
         private const string CardPowerLeft = "Card_Pwr_Slot_4"; 
 
         // Texture used for the face-down cards on power textures
-        private const string PowerEmptyTexture = "Card_None";
+        private const string EmptyTexture = "Card_None";
 
         // Texture names of all number textures
         private const string Power0Texture = "Card_0";
@@ -273,12 +276,13 @@ namespace NWN.FinalFantasy.Service
                 GetArea(state.Player2) != state.ArenaArea)
                 return;
 
-            // Spawn player hands
+            // Spawn player 1's hand
             for (var index = 1; index <= 5; index++)
             {
                 var cardType = state.Player1Hand[index].Type;
                 var placeable = SpawnCard(gameId, $"PLAYER_1_HAND_{index}", cardType, HandCardScale);
                 state.Player1Hand[index].Placeable = placeable;
+                state.Player1Hand[index].Type = cardType;
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_HAND_SLOT", index);
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_OWNER", 1);
                 SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_select");
@@ -286,16 +290,35 @@ namespace NWN.FinalFantasy.Service
                 ReplaceObjectTexture(placeable, "Card_Bkg_Red", BackgroundBlueTexture);
             }
             
+            // Spawn player 2's hand
             for (var index = 1; index <= 5; index++)
             {
                 var cardType = state.Player2Hand[index].Type;
                 var placeable = SpawnCard(gameId, $"PLAYER_2_HAND_{index}", cardType, HandCardScale);
                 state.Player2Hand[index].Placeable = placeable;
+                state.Player2Hand[index].Type = cardType;
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_HAND_SLOT", index);
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_OWNER", 2);
                 SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_select");
 
                 ReplaceObjectTexture(placeable, "Card_Bkg_Red", BackgroundRedTexture);
+            }
+
+            // Spawn blank cards on the board
+            for (var x = 0; x <= 2; x++)
+            {
+                for (var y = 0; y <= 2; y++)
+                {
+                    var locationId = $"BOARD_{x}_{y}";
+                    var placeable = SpawnCard(gameId, locationId, CardType.Invalid);
+                    SetName(placeable, $"({x}, {y})");
+                    SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_place");
+                    ReplaceObjectTexture(placeable, "Card_Bkg_Red", EmptyTexture);
+                    SetLocalInt(placeable, "TRIPLE_TRIAD_X", x);
+                    SetLocalInt(placeable, "TRIPLE_TRIAD_Y", y);
+
+                    state.Board[x, y].Placeable = placeable;
+                }
             }
 
             state.HasInitialized = true;
@@ -327,6 +350,9 @@ namespace NWN.FinalFantasy.Service
             ReplaceObjectTexture(placeable, CardPowerTop, GetPowerTexture(card.TopPower));
             ReplaceObjectTexture(placeable, CardPowerBottom, GetPowerTexture(card.BottomPower));
             ReplaceObjectTexture(placeable, CardPowerLeft, GetPowerTexture(card.LeftPower));
+
+            // Set the element texture
+            ReplaceObjectTexture(placeable, ElementTexture, GetElementTexture(card.Element));
 
             // Scale the card to fit the board
             SetObjectVisualTransform(placeable, ObjectVisualTransform.Scale, scale);
@@ -368,7 +394,33 @@ namespace NWN.FinalFantasy.Service
                     return PowerATexture;
             }
 
-            return PowerEmptyTexture;
+            return EmptyTexture;
+        }
+
+        private static string GetElementTexture(CardElementType elementType)
+        {
+            switch (elementType)
+            {
+                // todo: make these textures
+                case CardElementType.Earth:
+                    break;
+                case CardElementType.Fire:
+                    break;
+                case CardElementType.Water:
+                    break;
+                case CardElementType.Poison:
+                    break;
+                case CardElementType.Holy:
+                    break;
+                case CardElementType.Lightning:
+                    break;
+                case CardElementType.Wind:
+                    break;
+                case CardElementType.Ice:
+                    break;
+            }
+
+            return EmptyTexture;
         }
 
         /// <summary>
@@ -380,7 +432,7 @@ namespace NWN.FinalFantasy.Service
             var player = GetPlaceableLastClickedBy();
             var placeable = OBJECT_SELF;
             var area = GetArea(placeable);
-            var (owner, _) = GetCardHandDetails(placeable);
+            var (owner, cardHandId) = GetCardHandDetails(placeable);
             var gameId = GetGameId(area);
             var state = GameStates[gameId];
 
@@ -410,6 +462,8 @@ namespace NWN.FinalFantasy.Service
                         Visibility.SetVisibilityOverride(state.Player2, placeable, VisibilityType.Hidden);
                     }
                 }
+
+                state.Player1Selection.CardHandId = cardHandId;
             }
             else if (owner == CardGamePlayer.Player2)
             {
@@ -428,12 +482,77 @@ namespace NWN.FinalFantasy.Service
                         Visibility.SetVisibilityOverride(state.Player2, placeable, VisibilityType.Visible);
                     }
                 }
+
+                state.Player2Selection.CardHandId = cardHandId;
             }
         }
 
+        /// <summary>
+        /// When a player clicks on a card on the board, attempt to place the selected card.
+        /// </summary>
         [NWNEventHandler("tt_card_place")]
         public static void PlaceCard()
         {
+            var player = GetPlaceableLastClickedBy();
+            var placeable = OBJECT_SELF;
+            var area = GetArea(placeable);
+            var gameId = GetGameId(area);
+            var state = GameStates[gameId];
+            var x = GetLocalInt(placeable, "TRIPLE_TRIAD_X");
+            var y = GetLocalInt(placeable, "TRIPLE_TRIAD_Y");
+
+            AssignCommand(player, () => ClearAllActions());
+
+            // Is it this the player's turn?
+            if (state.CurrentPlayerTurn == CardGamePlayer.Player1 &&
+                state.Player1 != player)
+            {
+                SendMessageToPC(player, "It is currently player 2's turn. Please wait your turn.");
+                return;
+            }
+            else if (state.CurrentPlayerTurn == CardGamePlayer.Player2 &&
+                     state.Player2 != player)
+            {
+                SendMessageToPC(player, "It is currently player 1's turn. Please wait your turn.");
+                return;
+            }
+
+            var selection = state.CurrentPlayerTurn == CardGamePlayer.Player1
+                ? state.Player1Selection
+                : state.Player2Selection;
+
+            // Player hasn't selected a card yet.
+            if (selection.Placeable == null)
+            {
+                SendMessageToPC(player, "Select a card from your hand first.");
+                return;
+            }
+
+            // Sanity check to make sure the player hasn't picked a location that already has a card.
+            if (state.Board[x, y].CardType != CardType.Invalid)
+            {
+                return;
+            }
+
+            // We've got a valid location. Update the selected card in this position, remove the card from the player's hand, and run game rules on this change.
+            var hand = state.CurrentPlayerTurn == CardGamePlayer.Player1 
+                ? state.Player1Hand 
+                : state.Player2Hand;
+
+            var handCard = hand[selection.CardHandId];
+
+            if (handCard.Placeable != null)
+                DestroyObject((uint) handCard.Placeable);
+
+            if (selection.Placeable != null)
+                DestroyObject((uint) selection.Placeable);
+
+            DestroyObject(placeable);
+
+            selection.Placeable = null;
+
+            placeable = SpawnCard(gameId, $"BOARD_{x}_{y}", handCard.Type);
+            SetUseableFlag(placeable, false);
 
         }
 
