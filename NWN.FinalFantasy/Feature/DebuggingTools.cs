@@ -115,7 +115,7 @@ namespace NWN.FinalFantasy.Feature
                 dbTTPlayer.Decks[2] = new CardDeck
                 {
                     Name = "Player Deck",
-                    Card1 = CardType.Jelleye,
+                    Card1 = CardType.Blobra,
                     Card2 = CardType.GrandMantis,
                     Card3 = CardType.Buel,
                     Card4 = CardType.Mesmerize,

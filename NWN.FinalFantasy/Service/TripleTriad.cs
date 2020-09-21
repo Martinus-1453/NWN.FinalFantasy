@@ -329,12 +329,6 @@ namespace NWN.FinalFantasy.Service
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_OWNER", 1);
                 SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_select");
                 AssignCommand(placeable, () => ActionPlayAnimation(Animation.PlaceableDeactivate));
-
-                // Disable usability on card only if player isn't playing themselves (debugging purposes)
-                if (state.Player1 != state.Player2)
-                {
-                    Player.SetPlaceableUseable(state.Player2, placeable, false);
-                }
             }
 
             // Spawn player 2's hand
@@ -348,12 +342,6 @@ namespace NWN.FinalFantasy.Service
                 SetLocalInt(placeable, "TRIPLE_TRIAD_CARD_OWNER", 2);
                 SetEventScript(placeable, EventScript.Placeable_OnLeftClick, "tt_card_select");
                 AssignCommand(placeable, () => ActionPlayAnimation(Animation.PlaceableActivate));
-
-                // Disable usability on card only if player isn't playing themselves (debugging purposes)
-                if (state.Player1 != state.Player2)
-                {
-                    Player.SetPlaceableUseable(state.Player1, placeable, false);
-                }
             }
 
             // Spawn blank cards on the board
@@ -485,27 +473,31 @@ namespace NWN.FinalFantasy.Service
             }
         }
 
+        /// <summary>
+        /// Retrieves the texture associated with a card element type.
+        /// </summary>
+        /// <param name="elementType">The card's element type</param>
+        /// <returns>A texture string matching the specified element type.</returns>
         private static string GetElementTexture(CardElementType elementType)
         {
             switch (elementType)
             {
-                // todo: make these textures
                 case CardElementType.Earth:
-                    break;
+                    return "Card_Ele_Earth";
                 case CardElementType.Fire:
-                    break;
+                    return "Card_Ele_Fire";
                 case CardElementType.Water:
-                    break;
+                    return "Card_Ele_Water";
                 case CardElementType.Poison:
-                    break;
+                    return "Card_Ele_Poison";
                 case CardElementType.Holy:
-                    break;
+                    return "Card_Ele_Holy";
                 case CardElementType.Lightning:
-                    break;
+                    return "Card_Ele_Lgtng";
                 case CardElementType.Wind:
-                    break;
+                    return "Card_Ele_Wind";
                 case CardElementType.Ice:
-                    break;
+                    return "Card_Ele_Ice";
             }
 
             return EmptyTexture;
@@ -541,13 +533,14 @@ namespace NWN.FinalFantasy.Service
                 }
                 else
                 {
-                    state.Player1Selection.Placeable = CreateObject(ObjectType.Placeable, Player1SelectionResref, GetLocation(placeable));
+                    var selectionPlaceable = CreateObject(ObjectType.Placeable, Player1SelectionResref, GetLocation(placeable));
+                    state.Player1Selection.Placeable = selectionPlaceable;
 
                     // Do this check just in case the player is playing against himself.
                     if (state.Player1 != state.Player2)
                     {
-                        Visibility.SetVisibilityOverride(state.Player1, placeable, VisibilityType.Visible);
-                        Visibility.SetVisibilityOverride(state.Player2, placeable, VisibilityType.Hidden);
+                        Visibility.SetVisibilityOverride(state.Player1, selectionPlaceable, VisibilityType.Visible);
+                        Visibility.SetVisibilityOverride(state.Player2, selectionPlaceable, VisibilityType.Hidden);
                     }
                 }
 
@@ -561,13 +554,14 @@ namespace NWN.FinalFantasy.Service
                 }
                 else
                 {
-                    state.Player2Selection.Placeable = CreateObject(ObjectType.Placeable, Player2SelectionResref, GetLocation(placeable));
+                    var selectionPlaceable = CreateObject(ObjectType.Placeable, Player2SelectionResref, GetLocation(placeable));
+                    state.Player2Selection.Placeable = selectionPlaceable;
 
                     // Do this check just in case the player is playing against himself.
                     if (state.Player1 != state.Player2)
                     {
-                        Visibility.SetVisibilityOverride(state.Player1, placeable, VisibilityType.Hidden);
-                        Visibility.SetVisibilityOverride(state.Player2, placeable, VisibilityType.Visible);
+                        Visibility.SetVisibilityOverride(state.Player1, selectionPlaceable, VisibilityType.Hidden);
+                        Visibility.SetVisibilityOverride(state.Player2, selectionPlaceable, VisibilityType.Visible);
                     }
                 }
 
@@ -722,8 +716,6 @@ namespace NWN.FinalFantasy.Service
 
                 if (attackerPower > defenderPower)
                 {
-                    Console.WriteLine($"Attacker ({attackerDirection}) / {attackerPower} vs Defender ({defenderDirection}) / {defenderPower}"); // todo debug
-
                     defender.CurrentOwner = attacker.CurrentOwner;
                 }
 
