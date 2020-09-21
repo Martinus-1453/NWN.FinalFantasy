@@ -106,15 +106,24 @@ namespace NWN.FinalFantasy.Feature
                 dbTTPlayer.Decks[1] = new CardDeck
                 {
                     Name = "Player Deck",
-                    Card1 = CardType.Geezard,
-                    Card2 = CardType.Funguar,
-                    Card3 = CardType.BiteBug,
-                    Card4 = CardType.RedBat,
-                    Card5 = CardType.Blobra,
+                    Card1 = CardType.Belhelmel,
+                    Card2 = CardType.Thrustaevis,
+                    Card3 = CardType.Anacondaur,
+                    Card4 = CardType.Creeps,
+                    Card5 = CardType.Grendel,
+                };
+                dbTTPlayer.Decks[2] = new CardDeck
+                {
+                    Name = "Player Deck",
+                    Card1 = CardType.Jelleye,
+                    Card2 = CardType.GrandMantis,
+                    Card3 = CardType.Buel,
+                    Card4 = CardType.Mesmerize,
+                    Card5 = CardType.GlacialEye,
                 };
                 DB.Set(playerId, dbTTPlayer);
 
-                TripleTriad.StartGame(player, 1, player, 1);
+                TripleTriad.StartGame(player, 1, player, 2);
             }
 
             // Two player mode
@@ -124,11 +133,11 @@ namespace NWN.FinalFantasy.Feature
                 dbTTPlayer1.Decks[1] = new CardDeck
                 {
                     Name = "Player Deck",
-                    Card1 = CardType.Geezard,
-                    Card2 = CardType.Funguar,
-                    Card3 = CardType.BiteBug,
-                    Card4 = CardType.RedBat,
-                    Card5 = CardType.Blobra,
+                    Card1 = CardType.Gayla,
+                    Card2 = CardType.Gesper,
+                    Card3 = CardType.FastitocalonF,
+                    Card4 = CardType.BloodSoul,
+                    Card5 = CardType.Caterchipillar,
                 };
                 DB.Set(player1Id, dbTTPlayer1);
 
@@ -136,13 +145,15 @@ namespace NWN.FinalFantasy.Feature
                 dbTTPlayer2.Decks[1] = new CardDeck
                 {
                     Name = "Player Deck",
-                    Card1 = CardType.Geezard,
-                    Card2 = CardType.Funguar,
-                    Card3 = CardType.BiteBug,
-                    Card4 = CardType.RedBat,
-                    Card5 = CardType.Blobra,
+                    Card1 = CardType.Cockatrice,
+                    Card2 = CardType.Grat,
+                    Card3 = CardType.Buel,
+                    Card4 = CardType.Mesmerize,
+                    Card5 = CardType.GlacialEye,
                 };
                 DB.Set(player2Id, dbTTPlayer2);
+
+                TripleTriad.StartGame(player1, 1, player2, 1);
             }
 
 

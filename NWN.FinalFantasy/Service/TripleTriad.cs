@@ -72,12 +72,31 @@ namespace NWN.FinalFantasy.Service
                 {CardType.Invalid, new Card(string.Empty, "Card_None", -1, -1, -1, -1)},
                 {CardType.FaceDown, new Card(string.Empty, "Card_Back", -1, -1, -1, -1)},
 
-                // Player card options
+                // Level 1 Cards
                 {CardType.Geezard, new Card("Geezard", "Card_P_Geezard", 1, 1, 5, 4)},
                 {CardType.Funguar, new Card("Funguar", "Card_P_Funguar", 5, 1, 3, 1)},
                 {CardType.BiteBug, new Card("Bite Bug", "Card_P_BiteBug", 1, 3, 5, 3)},
                 {CardType.RedBat, new Card("Red Bat", "Card_P_RedBat", 6, 1, 2, 1)},
                 {CardType.Blobra, new Card("Blobra", "Card_P_Blobra", 2, 1, 5, 3)},
+                {CardType.Gayla, new Card("Gayla", "Card_P_Gayla", 2, 4, 4, 1, CardElementType.Lightning)},
+                {CardType.Gesper, new Card("Gesper", "Card_P_Gesper", 1, 4, 1, 5)},
+                {CardType.FastitocalonF, new Card("Fastitocalon-F", "Card_P_Fastitoca", 3, 2, 1, 5, CardElementType.Earth)},
+                {CardType.BloodSoul, new Card("Blood Soul", "Card_P_BloodSoul", 2, 6, 1, 1)},
+                {CardType.Caterchipillar, new Card("Caterchipillar", "Card_P_Caterchip", 4, 4, 3, 2)},
+                {CardType.Cockatrice, new Card("Cockatrice", "Card_P_Cockatric", 2, 2, 6, 1)},
+
+                // Level 2 Cards
+                {CardType.Grat, new Card("Grat", "Card_P_Grat", 7, 3, 1, 1)},
+                {CardType.Buel, new Card("Buel", "Card_P_Buel", 6, 2, 3, 2)},
+                {CardType.Mesmerize, new Card("Mesmerize", "Card_P_Mesmerize", 5, 3, 4, 3)},
+                {CardType.GlacialEye, new Card("Glacial Eye", "Card_P_GlacialE", 6, 4, 3, 1, CardElementType.Ice)},
+                {CardType.Belhelmel, new Card("Belhelmel", "Card_P_Belhelmel", 3, 5, 3, 4)},
+                {CardType.Thrustaevis, new Card("Thrustaevis", "Card_P_Thrustaev", 5, 2, 5, 3, CardElementType.Wind)},
+                {CardType.Anacondaur, new Card("Anacondaur", "Card_P_Anacondau", 5, 3, 5, 1)},
+                {CardType.Creeps, new Card("Creeps", "Card_P_Creeps", 5, 5, 2, 2)},
+                {CardType.Grendel, new Card("Grendel", "Card_P_Grendel", 4, 5, 2, 4)},
+                {CardType.Jelleye, new Card("Jelleye", "Card_P_Jelleye", 3, 1, 7, 2)},
+                {CardType.GrandMantis, new Card("Grand Mantis", "Card_P_GrandMant", 5, 5, 3, 2)},
             };
         }
 
@@ -941,7 +960,7 @@ namespace NWN.FinalFantasy.Service
 
             // Mark the game as ending. This flag will be picked up in the heartbeat processor.
             // We don't want to immediately end the game as it will create a jarring experience for the player.
-            // So instead, we leave the game active for about 2 seconds before cleaning up.
+            // So instead, we leave the game active for about 18 seconds before cleaning up.
             state.IsGameEnding = true;
         }
     }
