@@ -2,7 +2,7 @@
   "profiles": {
     "NWN.FinalFantasy.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "-k"
+      "commandLineArgs": "-p C:\\Projects\\NWN.FinalFantasy\\NWN.FinalFantasy\\bin\\Debug\\netcoreapp3.1"
     }
   }
 }

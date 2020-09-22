@@ -7,6 +7,7 @@ namespace NWN.FinalFantasy.CLI
     {
         private static readonly FurnitureItemCreator _furnitureCreator = new FurnitureItemCreator();
         private static readonly HakBuilder _hakBuilder = new HakBuilder();
+        private static readonly PostBuildEvents _postBuildEvents = new PostBuildEvents();
 
         static void Main(string[] args)
         {
@@ -23,6 +24,11 @@ namespace NWN.FinalFantasy.CLI
                 "Builds hakpak files based on the hakbuilder.json configuration file.",
                 CommandOptionType.NoValue);
 
+            var postBuildEvents = app.Option(
+                "-$|-p |--post",
+                "Performs post-build events like copying the DLLs to the dotnet folder.",
+                CommandOptionType.SingleValue);
+
             app.HelpOption("-? | -h | --help");
 
             app.OnExecute(() =>
@@ -35,6 +41,11 @@ namespace NWN.FinalFantasy.CLI
                 if (hakBuilderOption.HasValue())
                 {
                     _hakBuilder.Process();
+                }
+
+                if (postBuildEvents.HasValue())
+                {
+                    _postBuildEvents.Process(args[1]);
                 }
 
                 return 0;
