@@ -1,11 +1,14 @@
-﻿namespace NWN.FinalFantasy.Service.TripleTriadService
+﻿using System;
+
+namespace NWN.FinalFantasy.Service.TripleTriadService
 {
+    [Flags]
     public enum CardRuleType
     {
         None = 0,
         Open = 1,
-        Reverse = 2,
-        Plus = 3,
-        Elemental = 4,
+        Same = 2,
+        SameWall = 4,
+        Elemental = 8,
     }
 }

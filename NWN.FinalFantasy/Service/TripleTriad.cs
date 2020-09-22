@@ -52,6 +52,10 @@ namespace NWN.FinalFantasy.Service
         private const string Player1SelectionResref = "plc_solblue";
         private const string Player2SelectionResref = "plc_solred";
 
+        // Background textures
+        private const string Player1BackgroundTexture = "Card_Bkg_Blue";
+        private const string Player2BackgroundTexture = "Card_Bkg_Red";
+
         // Tracks all of the registered cards
         private static Dictionary<CardType, Card> AvailableCards { get; set; }
 
@@ -107,6 +111,10 @@ namespace NWN.FinalFantasy.Service
             SetLocalLocation(instance, "PLAYER_2_HAND_4", GetInstanceLocation(instance, GetLocation(GetWaypointByTag("TT_P2_CARD_4"))));
             SetLocalLocation(instance, "PLAYER_2_HAND_5", GetInstanceLocation(instance, GetLocation(GetWaypointByTag("TT_P2_CARD_5"))));
 
+            // Store score locations
+            SetLocalLocation(instance, "PLAYER_1_SCORE", GetInstanceLocation(instance, GetLocation(GetWaypointByTag("TT_P1_SCORE"))));
+            SetLocalLocation(instance, "PLAYER_2_SCORE", GetInstanceLocation(instance, GetLocation(GetWaypointByTag("TT_P2_SCORE"))));
+
             // Store board locations
             SetLocalLocation(instance, "BOARD_0_0", GetInstanceLocation(instance, GetLocation(GetWaypointByTag("TT_BOARD_0_0"))));
             SetLocalLocation(instance, "BOARD_0_1", GetInstanceLocation(instance, GetLocation(GetWaypointByTag("TT_BOARD_0_1"))));
@@ -153,11 +161,13 @@ namespace NWN.FinalFantasy.Service
         /// <param name="player1DeckId">The first player's deck Id.</param>
         /// <param name="player2">The second player</param>
         /// <param name="player2DeckId">The second player's deck Id.</param>
+        /// <param name="rules">The set of rules to use for this game.</param>
         public static void StartGame(
             uint player1, 
             int player1DeckId,
             uint player2,
-            int player2DeckId)
+            int player2DeckId,
+            CardRuleType rules = CardRuleType.None)
         {
             var arenaArea = CreateArena();
             CardDeck player1Deck;
@@ -191,6 +201,8 @@ namespace NWN.FinalFantasy.Service
             var gameId = Guid.NewGuid().ToString();
             GameStates[gameId] = state;
             SetLocalString(arenaArea, "TRIPLE_TRIAD_GAME_ID", gameId);
+
+            state.Rules = rules;
 
             // Register player 1's hand
             state.Player1Hand[1].Type = player1Deck.Card1;
@@ -357,10 +369,12 @@ namespace NWN.FinalFantasy.Service
                     SetLocalInt(placeable, "TRIPLE_TRIAD_Y", y);
 
                     state.Board[x, y].Placeable = placeable;
-                    ReplaceObjectTexture(placeable, "Card_Bkg_Red", EmptyTexture);
+                    ReplaceObjectTexture(placeable, Player2BackgroundTexture, EmptyTexture);
                     ReplaceObjectTexture(placeable, "Card_Board", EmptyTexture);
                 }
             }
+
+            UpdateScore(gameId);
 
             if (Random.D100(1) <= 50)
             {
@@ -787,6 +801,8 @@ namespace NWN.FinalFantasy.Service
                 DoFight(boardCard, state.Board[2, 1], CardDirection.Left, CardDirection.Right);
                 DoFight(boardCard, state.Board[1, 2], CardDirection.Top, CardDirection.Bottom);
             }
+
+            UpdateScore(gameId);
         }
 
         /// <summary>
@@ -923,6 +939,41 @@ namespace NWN.FinalFantasy.Service
             // We don't want to immediately end the game as it will create a jarring experience for the player.
             // So instead, we leave the game active for about 18 seconds before cleaning up.
             state.IsGameEnding = true;
+        }
+
+        /// <summary>
+        /// Updates the textures of the score placeables to match the game scores.
+        /// </summary>
+        /// <param name="gameId">The game Id</param>
+        private static void UpdateScore(string gameId)
+        {
+            var state = GameStates[gameId];
+            var (player1Score, player2Score) = state.CalculatePoints();
+            var player1ScoreTexture = GetPowerTexture(player1Score);
+            var player2ScoreTexture = GetPowerTexture(player2Score);
+
+            Console.WriteLine($"p1 = {player1Score}, p2 = {player2Score}"); // todo debug
+
+            // todo: figure out what's wrong with replacing textures
+
+            // Spawn score placeables
+            if (state.Player1ScorePlaceable == null)
+            {
+                state.Player1ScorePlaceable = SpawnCard(gameId, "PLAYER_1_SCORE", CardType.Score, 0.8f);
+                SetUseableFlag((uint)state.Player1ScorePlaceable, false);
+                ReplaceObjectTexture((uint)state.Player1ScorePlaceable, Player2BackgroundTexture, EmptyTexture);
+            }
+
+            if (state.Player2ScorePlaceable == null)
+            {
+                state.Player2ScorePlaceable = SpawnCard(gameId, "PLAYER_2_SCORE", CardType.Score, 0.8f);
+                SetUseableFlag((uint)state.Player2ScorePlaceable, false);
+                ReplaceObjectTexture((uint)state.Player2ScorePlaceable, Player2BackgroundTexture, EmptyTexture);
+            }
+
+            // Replace Main graphic area
+            ReplaceObjectTexture((uint)state.Player1ScorePlaceable, DefaultCardTexture, player1ScoreTexture);
+            ReplaceObjectTexture((uint)state.Player2ScorePlaceable, DefaultCardTexture, player2ScoreTexture);
         }
     }
 }

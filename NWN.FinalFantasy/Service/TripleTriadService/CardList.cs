@@ -9,6 +9,7 @@ namespace NWN.FinalFantasy.Service.TripleTriadService
             return new Dictionary<CardType, Card>()
             {
                 // Special card types used by the system
+                {CardType.Score, new Card(string.Empty, "Card_5", -1, -1, -1, -1)},
                 {CardType.Invalid, new Card(string.Empty, "Card_None", -1, -1, -1, -1)},
                 {CardType.FaceDown, new Card(string.Empty, "Card_Back", -1, -1, -1, -1)},
 

@@ -12,7 +12,7 @@ namespace NWN.FinalFantasy.Service.TripleTriadService
         public uint Player2 { get; set; }
         public CardBoardPosition[,] Board { get; set; }
         public CardGamePlayer CurrentPlayerTurn { get; set; }
-        public CardRuleType ActiveRule { get; set; }
+        public CardRuleType Rules { get; set; }
 
         public Dictionary<int, CardHand> Player1Hand { get; set; }
         public Dictionary<int, CardHand> Player2Hand { get; set; }
@@ -21,6 +21,9 @@ namespace NWN.FinalFantasy.Service.TripleTriadService
         public CardSelection Player2Selection { get; set; }
 
         public int DisconnectionCheckCounter { get; set; }
+
+        public uint? Player1ScorePlaceable { get; set; }
+        public uint? Player2ScorePlaceable { get; set; }
 
         public int GameEndingTicks { get; set; }
         public bool IsGameEnding { get; set; }

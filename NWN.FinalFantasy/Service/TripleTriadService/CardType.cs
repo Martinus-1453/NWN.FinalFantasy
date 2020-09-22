@@ -3,6 +3,7 @@
     public enum CardType
     {
         // Special
+        Score = -1,
         Invalid = 0,
         FaceDown = 1,
 
