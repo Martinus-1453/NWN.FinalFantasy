@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using NWN.FinalFantasy.Core;
 using NWN.FinalFantasy.Core.NWNX;
 using NWN.FinalFantasy.Core.NWNX.Enum;
@@ -70,6 +71,25 @@ namespace NWN.FinalFantasy.Service
         static TripleTriad()
         {
             AvailableCards = CardList.Create();
+        }
+
+        /// <summary>
+        /// Retrieves all available cards.
+        /// </summary>
+        /// <returns>All available cards</returns>
+        public static Dictionary<CardType, Card> GetAllAvailableCards()
+        {
+            return AvailableCards.ToDictionary(x => x.Key, y => y.Value);
+        }
+
+        /// <summary>
+        /// Retrieves a specific card by its type.
+        /// </summary>
+        /// <param name="cardType">The type of card to retrieve.</param>
+        /// <returns>A card detail object matching the specified type.</returns>
+        public static Card GetCardByType(CardType cardType)
+        {
+            return AvailableCards[cardType];
         }
 
         /// <summary>
