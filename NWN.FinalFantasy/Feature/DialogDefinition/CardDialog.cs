@@ -10,10 +10,12 @@ namespace NWN.FinalFantasy.Feature.DialogDefinition
     {
         private class Model
         {
+            public int SelectedCardLevel { get; set; }
             public CardType SelectedCardType { get; set; }
         }
 
         private const string MainPageId = "MAIN_PAGE";
+        private const string ViewCardLevelsPageId = "VIEW_CARD_LEVELS_PAGE";
         private const string ViewCardsPageId = "VIEW_CARDS_PAGE";
         private const string ViewCardDetailsPageId = "VIEW_CARD_DETAILS_PAGE";
         private const string ManageDecksPageId = "MANAGE_DECKS_PAGE";
@@ -23,6 +25,7 @@ namespace NWN.FinalFantasy.Feature.DialogDefinition
             var builder = new DialogBuilder()
                 .WithDataModel(new Model())
                 .AddPage(MainPageId, MainPageInit)
+                .AddPage(ViewCardLevelsPageId, ViewCardLevelsPageInit)
                 .AddPage(ViewCardsPageId, ViewCardsPageInit)
                 .AddPage(ViewCardDetailsPageId, ViewCardDetailsPageInit)
                 .AddPage(ManageDecksPageId, ManageDecksPageInit);
@@ -34,32 +37,49 @@ namespace NWN.FinalFantasy.Feature.DialogDefinition
         {
             page.Header = ColorToken.Green("Triple Triad Menu");
 
-            page.AddResponse("View Cards", () => ChangePage(ViewCardsPageId));
+            page.AddResponse("View Cards", () => ChangePage(ViewCardLevelsPageId));
             page.AddResponse("Manage Decks", () => ChangePage(ManageDecksPageId));
+        }
+
+        private void ViewCardLevelsPageInit(DialogPage page)
+        {
+            var model = GetDataModel<Model>();
+            page.Header = "Please select a card level.";
+
+            for (var level = 1; level <= 10; level++)
+            {
+                var levelSelection = level; // Copy the value so the following delegate uses the correct number.
+                page.AddResponse($"Level {level}", () =>
+                {
+                    model.SelectedCardLevel = levelSelection;
+                    ChangePage(ViewCardsPageId);
+                });
+            }
         }
 
         private void ViewCardsPageInit(DialogPage page)
         {
+            var model = GetDataModel<Model>();
             var player = GetPC();
             var playerId = GetObjectUUID(player);
             var dbPlayerTripleTriad = DB.Get<PlayerTripleTriad>(playerId);
-            var availableCards = TripleTriad.GetAllAvailableCards();
-            var model = GetDataModel<Model>();
+            var availableCards = TripleTriad.GetAllCardsAtLevel(model.SelectedCardLevel);
 
-            page.Header = $"The following is the full list of cards available. Cards in {ColorToken.Green("GREEN")} have been acquired. Those in {ColorToken.Red("RED")} have not. Only one card per type can be collected.\n\n" +
+            page.Header = $"{ColorToken.Green("Level: ")} {model.SelectedCardLevel}\n\n" +
+                $"The following is the full list of cards available. Cards in {ColorToken.Green("GREEN")} have been acquired. Those in {ColorToken.Red("RED")} have not. Only one card per type can be collected.\n\n" +
                 "Please select a card.";
 
-            foreach (var card in availableCards)
+            foreach (var (type, card) in availableCards)
             {
-                if (!card.Value.IsVisibleInMenu) continue;
+                if (!card.IsVisibleInMenu) continue;
 
-                var option = dbPlayerTripleTriad.AvailableCards.ContainsKey(card.Key) 
-                    ? ColorToken.Green(card.Value.Name) 
-                    : ColorToken.Red(card.Value.Name);
+                var option = dbPlayerTripleTriad.AvailableCards.ContainsKey(type) 
+                    ? ColorToken.Green(card.Name) 
+                    : ColorToken.Red(card.Name);
 
                 page.AddResponse(option, () =>
                 {
-                    model.SelectedCardType = card.Key;
+                    model.SelectedCardType = type;
                     ChangePage(ViewCardDetailsPageId);
                 });
             }

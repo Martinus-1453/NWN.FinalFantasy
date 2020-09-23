@@ -58,6 +58,7 @@ namespace NWN.FinalFantasy.Service
 
         // Tracks all of the registered cards
         private static Dictionary<CardType, Card> AvailableCards { get; set; }
+        private static Dictionary<int, List<CardType>> CardsByLevel { get; set; } = new Dictionary<int, List<CardType>>();
 
         // Tracks all of the available NPC deck choices
         private static Dictionary<int, CardDeck> NPCDeckTypes { get; set; } = CardNPCDecks.CreateNPCDecks();
@@ -65,12 +66,22 @@ namespace NWN.FinalFantasy.Service
         // Tracks all of the active game states
         private static Dictionary<string, CardGameState> GameStates { get; set; } = new Dictionary<string, CardGameState>();
 
+
         /// <summary>
-        /// Static constructor initializes all of the card data.
+        /// When the module loads, all card data is cached and sorted for quick lookups.
         /// </summary>
-        static TripleTriad()
+        [NWNEventHandler("mod_load")]
+        public static void LoadCardData()
         {
             AvailableCards = CardList.Create();
+
+            foreach (var (type, card) in AvailableCards)
+            {
+                if (!CardsByLevel.ContainsKey(card.Level))
+                    CardsByLevel[card.Level] = new List<CardType>();
+
+                CardsByLevel[card.Level].Add(type);
+            }
         }
 
         /// <summary>
@@ -80,6 +91,27 @@ namespace NWN.FinalFantasy.Service
         public static Dictionary<CardType, Card> GetAllAvailableCards()
         {
             return AvailableCards.ToDictionary(x => x.Key, y => y.Value);
+        }
+
+        /// <summary>
+        /// Retrieves all of the cards at a given level.
+        /// </summary>
+        /// <param name="level">The level to retrieve at.</param>
+        /// <returns>A dictionary containing cards at a given level.</returns>
+        public static Dictionary<CardType, Card> GetAllCardsAtLevel(int level)
+        {
+            if(!CardsByLevel.ContainsKey(level))
+                return new Dictionary<CardType, Card>();
+
+            var result = new Dictionary<CardType, Card>();
+            var cardsAtLevel = CardsByLevel[level];
+
+            foreach (var card in cardsAtLevel)
+            {
+                result.Add(card, AvailableCards[card]);
+            }
+
+            return result;
         }
 
         /// <summary>
