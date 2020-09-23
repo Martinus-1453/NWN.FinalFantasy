@@ -53,27 +53,26 @@ namespace NWN.FinalFantasy.CLI
 
             const string UnableToFindNWNError = "Warning: NWN directory could not be determined. Skipping post build events.";
 
-            // Default NWN directory doesn't exist. Check for a config file
-            if (!Directory.Exists(directory))
+            // Check for config file first.
+            if (File.Exists(ConfigFilePath))
             {
-                // Look for a config file.
-                if (!File.Exists(ConfigFilePath))
-                {
-                    Console.WriteLine(UnableToFindNWNError);
-                    return null;
-                }
-
                 var content = File.ReadAllText(ConfigFilePath);
                 var config = JsonConvert.DeserializeObject<PostBuildEventsConfig>(content);
 
                 directory = config.NWNPath;
+            }
 
-                // Check if this exists. If it doesn't, bail out.
-                if (!Directory.Exists(directory))
-                {
-                    Console.WriteLine(UnableToFindNWNError);
-                    return null;
-                }
+            // If directory value isn't configured in the config file, set it to the default.
+            if(string.IsNullOrWhiteSpace(directory))
+            {
+                directory = defaultNWNDirectory;
+            }
+
+            // Default NWN directory doesn't exist. Check for a config file
+            if ( !Directory.Exists(directory))
+            {
+                Console.WriteLine(UnableToFindNWNError);
+                return null;
             }
 
             return directory;
