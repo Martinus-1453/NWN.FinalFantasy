@@ -22,8 +22,8 @@ namespace NWN.FinalFantasy.Service.TripleTriadService
 
         public int DisconnectionCheckCounter { get; set; }
 
-        public uint? Player1ScorePlaceable { get; set; }
-        public uint? Player2ScorePlaceable { get; set; }
+        public uint Player1ScorePlaceable { get; set; }
+        public uint Player2ScorePlaceable { get; set; }
 
         public int GameEndingTicks { get; set; }
         public bool IsGameEnding { get; set; }

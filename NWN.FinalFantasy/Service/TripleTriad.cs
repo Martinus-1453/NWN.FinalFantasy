@@ -10,7 +10,6 @@ using NWN.FinalFantasy.Service.TripleTriadService;
 using static NWN.FinalFantasy.Core.NWScript.NWScript;
 using Location = NWN.FinalFantasy.Core.Location;
 using Object = NWN.FinalFantasy.Core.NWNX.Object;
-using Player = NWN.FinalFantasy.Core.NWNX.Player;
 
 namespace NWN.FinalFantasy.Service
 {
@@ -374,7 +373,18 @@ namespace NWN.FinalFantasy.Service
                 }
             }
 
-            UpdateScore(gameId);
+            // Spawn score cards
+            state.Player1ScorePlaceable = SpawnCard(gameId, "PLAYER_1_SCORE", CardType.Invalid, 0.8f);
+            SetUseableFlag(state.Player1ScorePlaceable, false);
+            ReplaceObjectTexture(state.Player1ScorePlaceable, DefaultCardTexture, GetPowerTexture(5));
+            ReplaceObjectTexture(state.Player1ScorePlaceable, Player1BackgroundTexture, EmptyTexture);
+            ReplaceObjectTexture(state.Player1ScorePlaceable, Player2BackgroundTexture, EmptyTexture);
+
+            state.Player2ScorePlaceable = SpawnCard(gameId, "PLAYER_2_SCORE", CardType.Invalid, 0.8f);
+            SetUseableFlag(state.Player2ScorePlaceable, false);
+            ReplaceObjectTexture(state.Player2ScorePlaceable, DefaultCardTexture, GetPowerTexture(5));
+            ReplaceObjectTexture(state.Player2ScorePlaceable, Player1BackgroundTexture, EmptyTexture);
+            ReplaceObjectTexture(state.Player2ScorePlaceable, Player2BackgroundTexture, EmptyTexture);
 
             if (Random.D100(1) <= 50)
             {
@@ -952,28 +962,11 @@ namespace NWN.FinalFantasy.Service
             var player1ScoreTexture = GetPowerTexture(player1Score);
             var player2ScoreTexture = GetPowerTexture(player2Score);
 
-            Console.WriteLine($"p1 = {player1Score}, p2 = {player2Score}"); // todo debug
-
-            // todo: figure out what's wrong with replacing textures
-
-            // Spawn score placeables
-            if (state.Player1ScorePlaceable == null)
-            {
-                state.Player1ScorePlaceable = SpawnCard(gameId, "PLAYER_1_SCORE", CardType.Score, 0.8f);
-                SetUseableFlag((uint)state.Player1ScorePlaceable, false);
-                ReplaceObjectTexture((uint)state.Player1ScorePlaceable, Player2BackgroundTexture, EmptyTexture);
-            }
-
-            if (state.Player2ScorePlaceable == null)
-            {
-                state.Player2ScorePlaceable = SpawnCard(gameId, "PLAYER_2_SCORE", CardType.Score, 0.8f);
-                SetUseableFlag((uint)state.Player2ScorePlaceable, false);
-                ReplaceObjectTexture((uint)state.Player2ScorePlaceable, Player2BackgroundTexture, EmptyTexture);
-            }
-
             // Replace Main graphic area
-            ReplaceObjectTexture((uint)state.Player1ScorePlaceable, DefaultCardTexture, player1ScoreTexture);
-            ReplaceObjectTexture((uint)state.Player2ScorePlaceable, DefaultCardTexture, player2ScoreTexture);
+            ReplaceObjectTexture(state.Player1ScorePlaceable, DefaultCardTexture, string.Empty);
+            ReplaceObjectTexture(state.Player2ScorePlaceable, DefaultCardTexture, string.Empty);
+            ReplaceObjectTexture(state.Player1ScorePlaceable, DefaultCardTexture, player1ScoreTexture);
+            ReplaceObjectTexture(state.Player2ScorePlaceable, DefaultCardTexture, player2ScoreTexture);
         }
     }
 }
