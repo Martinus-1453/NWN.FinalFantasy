@@ -14,7 +14,7 @@ namespace NWN.FinalFantasy.CLI
         private const string ConfigFilePath = "./hakbuilder.json";
         private HakBuilderConfig _config;
         private List<HakBuilderHakpak> _haksToProcess;
-        private Dictionary<string, string> _checksumDictionary = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _checksumDictionary = new Dictionary<string, string>();
 
         public void Process()
         {
@@ -95,7 +95,7 @@ namespace NWN.FinalFantasy.CLI
                         // Check whether .hak file exists
                         if (!File.Exists(_config.OutputPath + hak.Name + ".hak"))
                         {
-                            Console.WriteLine(hak.Name + " needs to be build");
+                            Console.WriteLine(hak.Name + " needs to be built");
                             return;
                         }
 
@@ -105,13 +105,13 @@ namespace NWN.FinalFantasy.CLI
                         // Check whether .sha checksum file exists
                         if (!File.Exists(_config.OutputPath + hak.Name + ".md5"))
                         {
-                            Console.WriteLine(hak.Name + " needs to be build");
+                            Console.WriteLine(hak.Name + " needs to be built");
                             return;
                         }
 
-                        // When checksums are equal or hak folder doesn't exits -> remove hak from the list
+                        // When checksums are equal or hak folder doesn't exist -> remove hak from the list
                         var checksumFile = ChecksumUtil.ReadChecksumFile(_config.OutputPath + hak.Name + ".md5");
-                        if (checksumFolder.Equals(checksumFile))
+                        if (checksumFolder == checksumFile)
                         {
                             _haksToProcess.Remove(hak);
                             Console.WriteLine(hak.Name + " is up to date");
@@ -184,13 +184,11 @@ namespace NWN.FinalFantasy.CLI
                 process.WaitForExit();
             }
 
-            if (_checksumDictionary.TryGetValue(hakName, out var checksum))
-            {
-            }
-            else
+            if (!_checksumDictionary.TryGetValue(hakName, out var checksum))
             {
                 checksum = ChecksumUtil.ChecksumFolder(folderPath);
             }
+
             ChecksumUtil.WriteChecksumFile(_config.OutputPath + hakName + ".md5", checksum);
         }
 
